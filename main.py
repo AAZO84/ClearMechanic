@@ -5,6 +5,7 @@ except ImportError as e:
     pyodbc = None
     print("Error al importar pyodbc:", e)
 import os
+import httpx
 
 
 app = FastAPI()
@@ -146,5 +147,11 @@ def get_inventory_item(itemId: str):
             cursor.close()
         if conexion:
             conexion.close()
+
+@app.get("/my-egress-ip")
+async def my_egress_ip():
+    async with httpx.AsyncClient() as client:
+        r = await client.get("https://api.ipify.org?format=json")
+        return r.json()
 
       
