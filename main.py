@@ -6,6 +6,7 @@ except ImportError as e:
     print("Error al importar pyodbc:", e)
 import os
 import socket
+import httpx
 
 
 app = FastAPI()
@@ -158,4 +159,3 @@ def test_connection(host: str, port: int):
         return {"success": True, "message": f"Conexión exitosa a {host}:{port}"}
     except Exception as e:
         return {"success": False, "message": str(e)}
-      
