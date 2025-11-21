@@ -1,5 +1,9 @@
 from fastapi import FastAPI, Query, HTTPException
-import pyodbc
+try:
+    import pyodbc
+except ImportError as e:
+    pyodbc = None
+    print("Error al importar pyodbc:", e)
 import os
 
 
@@ -7,6 +11,9 @@ app = FastAPI()
 
 # Conexion a SQL Sever
 def get_db_connection():
+    if pyodbc is None:
+       raise RuntimeError("pyodbc no está disponible en este entorno")
+
     server_sql = 'tcp:10.122.114.21'
     database_sql = 'PROSHOP-TEST'
     username_sql = 'sa'
