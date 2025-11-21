@@ -16,7 +16,7 @@ def get_db_connection():
     if pyodbc is None:
        raise RuntimeError("pyodbc no está disponible en este entorno")
 
-    server_sql = 'tcp:10.122.114.21'
+    server_sql = '64.250.122.114,1430'
     database_sql = 'PROSHOP-TEST'
     username_sql = 'sa'
     password_sql = 'P4ssw0rd'
