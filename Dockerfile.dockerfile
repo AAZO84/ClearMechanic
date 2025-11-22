@@ -1,5 +1,3 @@
-
-
 # Imagen base
 FROM python:3.13-slim
 
@@ -15,7 +13,7 @@ RUN apt-get update && \
         unixodbc unixodbc-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Repositorio de Microsoft para msodbcsql18 (Debian 12 - bookworm)
+# Repositorio de Microsoft (ODBC Driver 18 para SQL Server - Debian 12 / Bookworm)
 RUN set -eux; \
     mkdir -p /etc/apt/keyrings; \
     curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg; \
@@ -35,5 +33,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el código
 COPY . .
 
-# Comando de arranque (Railway inyecta $PORT)
+# Comando de arranque (Railway usa la variable $PORT)
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
+
