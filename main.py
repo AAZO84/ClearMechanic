@@ -1,26 +1,62 @@
-from fastapi import FastAPI, Query, HTTPException
-import os, socket
+from fastapi import FastAPI, HTTPException, Query
+from typing import Optional
+import socket
 
+# Intentar importar pyodbc y fallar con explicación clara
 try:
     import pyodbc
-except ImportError as e:
+    PYODBC_OK = True
+except Exception as e:
     pyodbc = None
-    print("Error al importar pyodbc:", e)
+    PYODBC_OK = False
+    PYODBC_IMPORT_ERROR = str(e)
 
-app = FastAPI()
+app = FastAPI(title="Railway + FastAPI + pyodbc demo")
+
+# --- Utilidades de diagnóstico ---
+@app.get("/health")
+def health():
+    return {"ok": True}
+
+@app.get("/diag/pyodbc")
+def diag_pyodbc():
+    if not PYODBC_OK:
+        return {
+            "pyodbc_imported": False,
+            "error": PYODBC_IMPORT_ERROR
+        }
+    return {
+        "pyodbc_imported": True,
+        "pyodbc_version": getattr(pyodbc, "__version__", "unknown")
+    }
+
+@app.get("/diag/test-connection")
+def test_connection(host: str, port: int):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(3)
+    try:
+        s.connect((host, port))
+        return {"success": True, "message": f"Conexión exitosa a {host}:{port}"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        s.close()
+
+# --- Conexión a SQL Server ---
 
 def get_connection_string() -> str:
-    server_sql   = '64.250.122.114,1430'   # IP pública, coma para puerto
+    # Ajusta estas variables o usa variables de entorno reales
+    server_sql   = '64.250.122.114,1430'  # IP pública, coma para puerto
     database_sql = 'PROSHOP-TEST'
     username_sql = 'sa'
     password_sql = 'P4ssw0rd'
-    # Driver con LLAVES y TLS permitido
+    # Driver 18 instalado por Dockerfile. TrustServerCertificate para entornos sin CA pública.
     return (
         "DRIVER={ODBC Driver 18 for SQL Server};"
         f"SERVER={server_sql};DATABASE={database_sql};"
         f"UID={username_sql};PWD={password_sql};"
-        "TrustServerCertificate=yes;"
-        # Si tu instancia requiere cifrado estricto quita TrustServerCertificate y usa Encrypt=yes con certificado válido
+        "Encrypt=yes;TrustServerCertificate=yes;"
+        "Connection Timeout=5;"
     )
 
 def connect_db():
@@ -28,37 +64,39 @@ def connect_db():
         raise HTTPException(status_code=500, detail="pyodbc no está disponible en este entorno (falta driver ODBC en la imagen).")
     conn_str = get_connection_string()
     try:
-        return pyodbc.connect(conn_str, timeout=5)
+        return pyodbc.connect(conn_str)
     except Exception as e:
-        # Log claro para depurar cadena/firewall
         raise HTTPException(status_code=500, detail=f"Error conectando a SQL Server: {e}")
 
 @app.get("/facturas")
 def get_facturas(fecha: str = Query(..., description="YYYY-MM-DD")):
-    query = "SELECT DocNum, DocDate, CardCode, CardName, DocTotal FROM OINV WHERE DocDate >= ?"
-    conexion = connect_db()
+    query = "SELECT TOP 5 DocNum, DocDate, CardCode, CardName, DocTotal FROM OINV WHERE DocDate >= ? ORDER BY DocDate DESC"
+    conn = connect_db()
     try:
-        cursor = conexion.cursor()
-        cursor.execute(query, (fecha,))  # <- como tupla
-        rows = cursor.fetchall()
+        cur = conn.cursor()
+        cur.execute(query, (fecha,))
+        rows = cur.fetchall()
         facturas = [{
             "DocNum": row.DocNum,
-            "DocDate": row.DocDate.strftime("%Y-%m-%d"),
+            "DocDate": row.DocDate.strftime("%Y-%m-%d") if row.DocDate else None,
             "CardCode": row.CardCode,
             "CardName": row.CardName,
             "DocTotal": float(row.DocTotal)
         } for row in rows]
-        return {"facturas": facturas}
+        return {"success": True, "facturas": facturas}
     finally:
-        cursor.close()
-        conexion.close()
+        try:
+            cur.close()
+        except:
+            pass
+        conn.close()
 
 @app.get("/api/inventoryItems/{itemId}")
 def get_inventory_item(itemId: str):
-    conexion = connect_db()
+    conn = connect_db()
     try:
-        cursor = conexion.cursor()
-        query = """
+        cur = conn.cursor()
+        query = '''
             SELECT 
                 T0.ItemCode, 
                 T0.ItemName,
@@ -72,9 +110,9 @@ def get_inventory_item(itemId: str):
             FROM OITM T0
             INNER JOIN ITM1 T1 ON T0.ItemCode = T1.ItemCode
             WHERE T1.PriceList = '1' AND T0.ItemCode = ?
-        """
-        cursor.execute(query, (itemId,))
-        row = cursor.fetchone()
+        '''
+        cur.execute(query, (itemId,))
+        row = cur.fetchone()
         if not row:
             return {"success": False, "message": f"Item {itemId} no encontrado", "data": None}
 
@@ -103,5 +141,8 @@ def get_inventory_item(itemId: str):
             "data": {"jobName": "Mantenimiento Preventivo", "jobId": "MantPrev", "parts": [part], "labors": [labor]}
         }
     finally:
-        cursor.close()
-        conexion.close()
+        try:
+            cur.close()
+        except:
+            pass
+        conn.close()
