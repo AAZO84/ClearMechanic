@@ -46,7 +46,7 @@ def test_connection(host: str, port: int):
 
 def get_connection_string() -> str:
     # Ajusta estas variables o usa variables de entorno reales
-    server_sql   = '64.250.122.114,1430'  # IP pública, coma para puerto
+    server_sql   = '64.250.122.114,1450'  # IP pública, coma para puerto
     database_sql = 'PROSHOP-TEST'
     username_sql = 'sa'
     password_sql = 'P4ssw0rd'
