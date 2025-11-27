@@ -1,6 +1,7 @@
-fastapi
-uvicorn[standard]
-pyodbc==5.2.0
+fastapi==0.122.0
+uvicorn[standard]==0.30.3
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
 pydantic==2.9.2
-typing_extensions>=4.8.0
-os
+typing_extensions==4.15.0
+
