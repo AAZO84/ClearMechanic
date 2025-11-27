@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-import psycopg2
+import psycopg
 import os
 
 
@@ -11,7 +11,7 @@ def connect_pg():
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
         raise Exception("DATABASE_URL no está configurada en Railway")
-    return psycopg2.connect(db_url)
+    return psycopg.connect(db_url)
 
 @app.get("/api/inventoryItems/{itemId}")
 def get_inventory_item(itemId: str):
