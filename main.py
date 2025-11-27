@@ -13,6 +13,11 @@ def connect_pg():
         raise Exception("DATABASE_URL no está configurada en Railway")
     return psycopg.connect(db_url)
 
+@app.get("/")
+def health():
+    return {"status": "ok"}
+    
+
 @app.get("/api/inventoryItems/{itemId}")
 def get_inventory_item(itemId: str):
     conn = connect_pg()
