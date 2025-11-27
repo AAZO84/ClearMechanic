@@ -3,3 +3,4 @@ uvicorn[standard]
 pyodbc==5.2.0
 pydantic==2.9.2
 typing_extensions>=4.8.0
+os
