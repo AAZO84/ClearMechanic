@@ -61,15 +61,12 @@ def get_inventory_item(itemId: str):
             "comments": [str(row[8])] if row[8] not in (None, "",) else []
         }
 
-        # OJO: aquí antes tenías {row[1]} y {row[0]} (un set). Debe ser string.
+       
         response = {
             "success": True,
             "message": None,
             "data": {
-                "jobName": str(row[1]),
-                "jobId": str(row[0]),
-                "parts": [part],
-                "labors": []
+                "parts": [part]
             }
         }
         return response
