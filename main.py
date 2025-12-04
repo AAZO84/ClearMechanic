@@ -63,7 +63,9 @@ def get_inventory_item(itemId: str):
 
        
         response = {
-                "parts": part     
+            "success": True,
+            "message": None,
+            "part": part     
         }
         return response
 
