@@ -63,7 +63,7 @@ def get_inventory_item(itemId: str):
 
        
         response = {
-                "parts": [part]     
+                "parts": part     
         }
         return response
 
