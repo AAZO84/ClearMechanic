@@ -63,11 +63,7 @@ def get_inventory_item(itemId: str):
 
        
         response = {
-            "success": True,
-            "message": None,
-            "data": {
-                "parts": [part]
-            }
+                "parts": [part]     
         }
         return response
 
